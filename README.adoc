@@ -274,8 +274,7 @@ async def current_ip():
 //     firstName: str
 //     middleName: str
 // ----
-``` python
-
+```
 include::app/forms.py[attributes]
 ```
 
