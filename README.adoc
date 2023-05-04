@@ -215,6 +215,8 @@ def get_application() -> FastAPI:
 app = get_application()
 ----
 
+link:app/main.py[Смотреть файл с кодом]
+
 Это базовая реализация приложения Fast API, которое включает в себя маршрутизатор. Функция `get_application()` создает и возвращает экземпляр Fast API, включает в него маршрутизатор с помощью метода `include_router()` и возвращает экземпляр. Экземпляр сохраняется в переменной app.
 
 Ожидается, что модуль обработчиков будет содержать объект `router`, который передается экземпляру Fast API. Вы можете определить свои маршруты API и соответствующие им обработчики в модуле `handlers`, используя декораторы API, такие как `@router.get()`, `@router.post()` и т.д.
@@ -254,6 +256,8 @@ async def current_ip():
     return ip
 ----
 
+link:app/handlers.py[Смотреть файл с кодом]
+
 В коде выше определено несколько эндпоинтов, включая корневую конечную точку по адресу /, которая просто возвращает объект JSON, указывающий на то, что сервер запущен.
 
 Второй эндпоинт `/users/{username}` принимает параметр пути username и возвращает персонализированное сообщение.
@@ -264,18 +268,18 @@ async def current_ip():
 
 *forms.py*
 
-// [source,python]
-// ----
-// from pydantic import BaseModel
+[source,python]
+----
+from pydantic import BaseModel
 
 
-// class UserNameParts(BaseModel):
-//     lastName: str
-//     firstName: str
-//     middleName: str
-// ----
+class UserNameParts(BaseModel):
+    lastName: str
+    firstName: str
+    middleName: str
+----
 
-include::app/forms.py[attributes]
+link:app/forms.py[Смотреть файл с кодом]
 
 Класс `UserNameParts` - это базовая модель Pedantic, которая определяет структуру данных, которые будут получены от клиента в теле запроса `/users/full-name`. В нем есть три поля: `LastName`, `FirstName` и `MiddleName`, все из которых имеют тип `str`.
 
@@ -297,6 +301,8 @@ def getIp():
 
     return response.text
 ----
+
+link:app/query.py[Смотреть файл с кодом]
 
 Это функция Python, которая использует библиотеку requests для выполнения запроса GET к URL-адресу "https://ifconfig.me/ip " и возвращает тело ответа в виде строки, которая должна быть текущим IP-адресом пользователя. Вот краткое описание того, что происходит в коде:
 
