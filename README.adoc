@@ -274,12 +274,10 @@ async def current_ip():
 //     firstName: str
 //     middleName: str
 // ----
+``` python
 
-[source,python]
-----
 include::app/forms.py[attributes]
-
-----
+```
 
 Класс `UserNameParts` - это базовая модель Pedantic, которая определяет структуру данных, которые будут получены от клиента в теле запроса `/users/full-name`. В нем есть три поля: `LastName`, `FirstName` и `MiddleName`, все из которых имеют тип `str`.
 
