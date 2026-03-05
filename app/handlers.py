@@ -1,10 +1,9 @@
 """Эндпоинты API для FastAPI приложения."""
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body
 
-from forms import UserNameParts, BirthDate
-
-from query import getIp, getTime, getHoroscope, getZodiacSign
+from .forms import UserNameParts
+from .query import getIp
 
 router = APIRouter()
 
@@ -54,36 +53,41 @@ async def current_ip() -> str:
     return ip
 
 
-@router.get("/users/current/full-time", name="Получить текущее время")
-async def current_full_time() -> dict:
-    """Получает текущее время по IP-адресу.
+# ЗАДАНИЕ 1: Реализуйте эндпоинт GET /users/current/full-time
+# Этот эндпоинт должен:
+# 1. Получить текущий IP-адрес пользователя (используйте функцию getIp())
+# 2. По IP-адресу получить текущее время из внешнего API
+#    Документация API: https://www.timeapi.io/swagger/index.html
+# 3. Вернуть информацию о времени в формате JSON
 
-    Returns:
-        Словарь с информацией о времени
-    """
-    ip = getIp()
-    full_time = getTime(ip)
-    return full_time
+# @router.get("/users/current/full-time", name="Получить текущее время")
+# async def current_full_time() -> dict:
+#     """Получает текущее время по IP-адресу.
+#
+#     Returns:
+#         Словарь с информацией о времени
+#     """
+#     # TODO: Студент должен реализовать этот метод
+#     pass
 
 
-@router.post("/horoscope", name="Получить гороскоп")
-async def horoscope(birth_data: BirthDate) -> dict[str, str]:
-    """Возвращает знак зодиака и гороскоп по дате рождения.
+# ЗАДАНИЕ 2: Реализуйте эндпоинт POST /horoscope
+# Этот эндпоинт должен:
+# 1. Принять дату рождения в теле запроса (модель BirthDate из forms.py)
+# 2. Определить знак зодиака по дате рождения
+# 3. Получить гороскоп на сегодня для этого знака зодиака
+#    API: https://www.ohmanda.com/api/horoscope/
+# 4. Вернуть знак зодиака и гороскоп в формате JSON
 
-    Args:
-        birth_data: Модель с датой рождения
-
-    Returns:
-        Словарь с знаком зодиака и гороскопом
-    """
-    try:
-        day = birth_data.birthDate.day
-        month = birth_data.birthDate.month
-        sign = getZodiacSign(day, month)
-        horoscope_data = getHoroscope(sign)
-        return {
-            "sign": sign,
-            "horoscope": horoscope_data.get("horoscope", "Нет данных"),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Ошибка: {str(e)}")
+# @router.post("/horoscope", name="Получить гороскоп")
+# async def horoscope(birth_data: BirthDate) -> dict[str, str]:
+#     """Возвращает знак зодиака и гороскоп по дате рождения.
+#
+#     Args:
+#         birth_data: Модель с датой рождения
+#
+#     Returns:
+#         Словарь с знаком зодиака и гороскопом
+#     """
+#     # TODO: Студент должен реализовать этот метод
+#     pass

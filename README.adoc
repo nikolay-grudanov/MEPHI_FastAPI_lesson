@@ -189,6 +189,91 @@ requests
 conda install -c conda-forge --file requirements.txt
 ----
 
+==== Настройка окружения с uv (альтернативный вариант)
+
+*uv* — это современный и сверхбыстрый пакетный менеджер для Python, который работает в 10-100 раз быстрее, чем pip.
+
+**Преимущества uv:**
+* Скорость установки в 10-100 раз быстрее, чем pip
+* Автоматическое управление виртуальными окружениями
+* Поддержка pyproject.toml (современный стандарт)
+* Совместимость с pip и setuptools
+
+**Установка uv:**
+
+На Linux/macOS:
+[source,bash]
+----
+curl -LsSf https://astral.sh/uv/install.sh | sh
+----
+
+На Windows:
+[source,powershell]
+----
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+----
+
+Или через pip:
+[source,bash]
+----
+pip install uv
+----
+
+**Настройка проекта с uv:**
+
+[source,bash]
+----
+# Создание виртуального окружения (автоматически)
+uv venv
+
+# Синхронизация зависимостей из pyproject.toml
+uv sync
+
+# Активация окружения
+# Linux/macOS:
+source .venv/bin/activate
+# Windows:
+.venv\Scripts\activate
+
+# Запуск приложения
+uv run uvicorn app.main:app --reload
+----
+
+**Основные команды uv:**
+
+[source,bash]
+----
+# Добавление новой зависимости
+uv add fastapi
+
+# Добавление dev-зависимости
+uv add --dev pytest
+
+# Установка всех зависимостей
+uv sync
+
+# Обновление зависимостей
+uv lock --upgrade
+
+# Запуск команды в виртуальном окружении
+uv run python script.py
+
+# Проверка установленных пакетов
+uv pip list
+----
+
+**Сравнение пакетных менеджеров:**
+
+В данном учебном проекте представлены три способа управления зависимостями:
+
+| Менеджер | Преимущества | Недостатки | Когда использовать |
+|----------|--------------|------------|-------------------|
+| *conda* | Управляет не только Python пакетами, но и системными библиотеками | Медленный, требует много места | Когда нужны сложные зависимости (например, для Data Science) |
+| *pip* | Стандартный менеджер, прост в использовании | Медленный, не управляет виртуальными окружениями | Для простых проектов и совместимости |
+| *uv* | Очень быстрый, современный, автоматическое управление venv | Новый инструмент, меньше документации | Для современных проектов, когда важна скорость |
+
+В рамках лабораторной работы рекомендуется попробовать все три варианта и выбрать наиболее подходящий для ваших задач.
+
 === Написание приложения
 
 Далее описан код в каждом из файлов
@@ -222,8 +307,7 @@ link:app/main.py[Смотреть файл с кодом]
 from fastapi import APIRouter, Body
 
 from forms import UserNameParts
-
-from query import getIp, getTime, getHoroscope, getZodiacSign
+from query import getIp
 
 router = APIRouter()
 
@@ -243,23 +327,6 @@ async def full_name(user_from: UserNameParts = Body(..., embed=True)):
 async def current_ip():
     ip = getIp()
     return ip
-
-@router.get('/users/current/full-time', name='Получить текущее время')
-async def current_full_time():
-    ip = getIp()
-    full_time = getTime(ip)
-    return full_time
-
-@router.post('/horoscope', name='Получить гороскоп')
-async def horoscope(birth_data: BirthDate):
-    day = birth_data.birthDate.day
-    month = birth_data.birthDate.month
-    sign = getZodiacSign(day, month)
-    horoscope_data = getHoroscope(sign)
-    return {
-        "sign": sign,
-        "horoscope": horoscope_data.get("horoscope", "Нет данных")
-    }
 ----
 
 link:app/handlers.py[Смотреть файл с кодом]
@@ -272,9 +339,7 @@ link:app/handlers.py[Смотреть файл с кодом]
 
 Четвёртый - это запрос GET к /users/current/ip, который возвращает текущий IP-адрес пользователя, используя запрос в сторонний сервис.
 
-Пятый - это запрос GET к /users/current/full-time, который получает текущий IP-адрес и затем по IP-адресу получает текущее время из внешнего API.
-
-Шестой - это POST-запрос к /horoscope, который принимает дату рождения в теле запроса, определяет знак зодиака по дате и возвращает гороскоп на сегодняшний день.
+*Остальные эндпоинты нужно реализовать самостоятельно в рамках заданий лабораторной работы.*
 
 *forms.py*
 
@@ -314,75 +379,43 @@ def getIp() -> str:
 
     response = requests.request("GET", url, headers=headers, data=payload)
     return response.text.strip()
-
-def getTime(ip: str) -> Dict[str, str]:
-    url = f"https://www.timeapi.io/api/Time/current/ip?ipAddress={ip}"
-    payload = {}
-    headers = {
-        'accept': 'application/json'
-    }
-
-    response = requests.request("GET", url, headers=headers, data=payload)
-    return response.json()
-
-def getHoroscope(sign: str) -> Dict[str, str]:
-    url = f"https://www.ohmanda.com/api/horoscope/today?sign={sign}"
-    payload = {}
-    headers = {}
-
-    response = requests.request("GET", url, headers=headers, data=payload)
-    return response.json()
-
-def getZodiacSign(day: int, month: int) -> str:
-    if (month == 3 and day >= 21) or (month == 4 and day <= 19):
-        return "aries"  # Овен
-    elif (month == 4 and day >= 20) or (month == 5 and day <= 20):
-        return "taurus"  # Телец
-    elif (month == 5 and day >= 21) or (month == 6 and day <= 20):
-        return "gemini"  # Близнецы
-    elif (month == 6 and day >= 21) or (month == 7 and day <= 22):
-        return "cancer"  # Рак
-    elif (month == 7 and day >= 23) or (month == 8 and day <= 22):
-        return "leo"  # Лев
-    elif (month == 8 and day >= 23) or (month == 9 and day <= 22):
-        return "virgo"  # Дева
-    elif (month == 9 and day >= 23) or (month == 10 and day <= 22):
-        return "libra"  # Весы
-    elif (month == 10 and day >= 23) or (month == 11 and day <= 21):
-        return "scorpio"  # Скорпион
-    elif (month == 11 and day >= 22) or (month == 12 and day <= 21):
-        return "sagittarius"  # Стрелец
-    elif (month == 12 and day >= 22) or (month == 1 and day <= 19):
-        return "capricorn"  # Козерог
-    elif (month == 1 and day >= 20) or (month == 2 and day <= 18):
-        return "aquarius"  # Водолей
-    elif (month == 2 and day >= 19) or (month == 3 and day <= 20):
-        return "pisces"  # Рыбы
-    else:
-        raise ValueError("Некорректная дата")
 ----
 
 link:app/query.py[Смотреть файл с кодом]
 
 Функция `getIp()` выполняет запрос GET к URL-адресу "https://ifconfig.me/ip" и возвращает тело ответа в виде строки, которая должна быть текущим IP-адресом пользователя.
 
-Функция `getTime(ip)` выполняет запрос GET к API https://www.timeapi.io/api/Time/current/ip с передачей IP-адреса в параметрах запроса и возвращает информацию о времени в формате JSON.
-
-Функция `getHoroscope(sign)` выполняет запрос GET к API https://www.ohmanda.com/api/horoscope/today с передачей знака зодиака в параметрах запроса и возвращает гороскоп в формате JSON.
-
-Функция `getZodiacSign(day, month)` определяет знак зодиака по дате рождения. Она принимает день и месяц рождения и возвращает название знака зодиака на английском.
-
-На sequence диаграмме ниже представлена работа последнего метода приложения
-
-image::doc/getIp.png[align=center]
+*Остальные функции (getTime, getHoroscope, getZodiacSign) нужно реализовать самостоятельно в рамках заданий лабораторной работы. Подробные инструкции и подсказки содержатся в файлах app/query.py и app/handlers.py в виде заглушек с docstrings.*
 
 === Запуск приложения
 
-Для запуска приложения нужно открыть терминал в папке с файлом main.py и выполнить следующую команду
+Для запуска приложения нужно открыть терминал в папке проекта и выполнить одну из следующих команд:
+
+**Если используете conda или pip:**
 
 [source,bash]
 ----
-uvicorn main:app --reload
+# После активации окружения
+uvicorn app.main:app --reload
+----
+
+**Если используете uv:**
+
+[source,bash]
+----
+# Активируйте окружение
+source .venv/bin/activate  # Linux/macOS
+# или
+.venv\Scripts\activate   # Windows
+
+# Запуск приложения
+uvicorn app.main:app --reload
+----
+
+# Или напрямую через uv (без активации)
+[source,bash]
+----
+uv run uvicorn app.main:app --reload
 ----
 
 Результат выполнения на скриншоте ниже ниже
@@ -399,22 +432,24 @@ image::doc/SwaggerFastAPI.png[align=center]
 
 == Задания лабораторной работы
 
+В коде проекта есть заглушки с подробными инструкциями. Вам нужно реализовать их самостоятельно.
+
 === Задание 1
 
-Используя материалы лекции реализуйте новый метод `GET /users/current/full-time` который будет выполнять запрос определения ip как в лекции и дополнительным шагом узнает дату по ip из сервиса https://www.timeapi.io/swagger/index.html.
+Реализуйте новый метод `GET /users/current/full-time` который будет выполнять запрос определения ip и дополнительным шагом узнает дату по ip из сервиса https://www.timeapi.io/swagger/index.html.
 Ознакомьтесь с документацией и выберите нужный метод.
 
-*Примечание:* Этот эндпоинт уже реализован в коде. Вы можете изучить его в файле `app/handlers.py`.
+*Инструкция:* Откройте файл `app/handlers.py`, найдите закомментированный блок для ЗАДАНИЕ 1, раскомментируйте его и реализуйте эндпоинт. Подробные инструкции по реализации вспомогательных функций находятся в файле `app/query.py` в заглушках функций `getTime()`.
 
 === Задание 2
 
 Реализуйте метод с помощью которого пользователь будет отправлять свою дату рождения, а в ответ получать названия своего знака зодиака и гороскоп на сегодня. Для получения гороскопов использовать сервис https://www.ohmanda.com/api/horoscope/
 
-*Примечание:* Этот эндпоинт уже реализован в коде. Вы можете изучить его в файле `app/handlers.py`.
+*Инструкция:* Откройте файл `app/handlers.py`, найдите закомментированный блок для ЗАДАНИЕ 2, раскомментируйте его и реализуйте эндпоинт. Подробные инструкции по реализации вспомогательных функций находятся в файле `app/query.py` в заглушках функций `getHoroscope()` и `getZodiacSign()`.
 
 **Дополнительное задание (по желанию):**
 
-Изучите реализованные эндпоинты и попробуйте:
+После реализации основных заданий попробуйте:
 
 * Добавить валидацию для даты рождения (например, не должна быть в будущем)
 * Добавить обработку ошибок при неудачных запросах к внешним API
